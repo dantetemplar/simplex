@@ -78,7 +78,7 @@ def solve_using_simplex_method(
     8000.0
     """
 
-    tableau = to_tableau(C, A, b)
+    tableau = base_case_to_tableau(C, A, b)
     logger.info(f"Initial tableau:\n{tableau=}")
 
     solved_tableau = _simplex(tableau, max_iterations=max_iterations)
@@ -151,11 +151,21 @@ def get_solution(tableau: np.ndarray) -> np.ndarray:
     return x
 
 
-def to_tableau(
+def base_case_to_tableau(
     C: ObjectiveCoefficients, A: ConstraintCoefficients, b: RightHandSides
 ) -> np.ndarray:
     """
-    Converts the linear programming problem to the tableau form.
+    Converts the [#input_data]_ base case of linear programming problem to the tableau form.
+
+    Tableau form::
+
+        +-------------------------+
+        |   Coeff-s  |  Solution  |
+        +=========================+
+        | A  A  1  0 | b          |
+        | A  A  0  1 | b          |
+        | C  C  0  0 | 0          |
+        +-------------------------+
 
     As an example, the following problem:
 
@@ -165,10 +175,17 @@ def to_tableau(
 
     will be converted to the following tableau (with an added slack variable for each constraint):
 
-    >>> to_tableau(C, A, b)
+    >>> base_case_to_tableau(C, A, b)
     array([[ 1.,  1.,  1.,  0.,  2.],
            [ 1., -1.,  0.,  1.,  1.],
            [ 1.,  2.,  0.,  0.,  0.]])
+
+    .. [#input_data] Base case of linear programming problem is a problem in the following form:
+
+        * All constraints are inequalities of the form :math:`a_1 x_1 + a_2 x_2 + ... + a_n x_n <= b_i`.
+        * Maximization problem of objective function :math:`c_1 x_1 + c_2 x_2 + ... + c_n x_n`.
+        * All variables are non-negative.
+
     """
 
     C = np.array(C)

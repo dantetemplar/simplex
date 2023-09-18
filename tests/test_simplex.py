@@ -9,7 +9,7 @@ def test_tableau():
     C = [1, 2]
     A = [[1, 1], [1, -1]]
     b = [2, 1]
-    tableau = simplex.to_tableau(C, A, b)
+    tableau = simplex.base_case_to_tableau(C, A, b)
     expected = np.array([[1, 1, 1, 0, 2], [1, -1, 0, 1, 1], [-1, -2, 0, 0, 0]])
 
     assert np.array_equal(tableau, expected) is True
@@ -18,7 +18,7 @@ def test_tableau():
     A = [[1, 1, 1, 0], [1, -1, 0, 1]]
     b = [2, 1]
 
-    tableau = simplex.to_tableau(C, A, b)
+    tableau = simplex.base_case_to_tableau(C, A, b)
     expected = np.array(
         [[1, 1, 1, 0, 1, 0, 2], [1, -1, 0, 1, 0, 1, 1], [-1, -1, 0, 0, 0, 0, 0]]
     )
