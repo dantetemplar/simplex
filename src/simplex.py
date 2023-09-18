@@ -5,11 +5,9 @@ import numpy as np
 import logging
 from dataclasses import dataclass
 
-logging.getLogger(__name__).setLevel(logging.INFO)
 
-
-def _logger():
-    return logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 ObjectiveCoefficients = Collection[float]
@@ -81,48 +79,60 @@ def solve_using_simplex_method(
     """
 
     tableau = to_tableau(C, A, b)
-    _logger().info(f"Initial tableau:\n{tableau=}")
+    logger.info(f"Initial tableau:\n{tableau=}")
 
+    solved_tableau = _simplex(tableau, max_iterations=max_iterations)
+    f = -solved_tableau[-1, -1]
+    x = get_solution(solved_tableau)
+    logger.info(f"{x=}, {f=}")
+    return Solution(x, f, C)
+
+
+def _simplex(tableau: np.ndarray, max_iterations: int):
+    """
+    Solves the linear programming problem using the simplex method.
+
+    :param tableau: problem in the tableau form (already with artificial and slack variables)
+    :param max_iterations: maximum number of iterations, after which the algorithm will raise a runtime exception
+    :return: solved tableau
+    """
+    tableau = tableau.copy()
     iteration = 0
-    prev_f = f = 0.0
-
+    prev_f = 0.0
     while not is_optimal(tableau):
         iteration += 1
-        _logger().info(f"Iteration {iteration}")
+        logger.info(f"Iteration {iteration}")
         if iteration > max_iterations:
             raise RuntimeError("Maximum number of iterations exceeded")
 
         pivot_column = find_pivot_column(tableau)
         pivot_row = find_pivot_row(tableau, pivot_column)
 
-        _logger().info(f"{pivot_column=}, {pivot_row=}")
-        _logger().info(f"pivot_value = {tableau[pivot_row, pivot_column]}")
+        logger.info(f"{pivot_column=}, {pivot_row=}")
+        logger.info(f"pivot_value = {tableau[pivot_row, pivot_column]}")
         tableau[pivot_row, :] /= tableau[pivot_row, pivot_column]
         for eq_i in range(tableau.shape[0]):
             if eq_i != pivot_row:
-                _logger().info(f"{eq_i=}")
+                logger.info(f"{eq_i=}")
                 delta_row = tableau[pivot_row, :] * tableau[eq_i, pivot_column]
-                _logger().info(f"{delta_row=}")
+                logger.info(f"{delta_row=}")
                 tableau[eq_i, :] -= delta_row
-                _logger().info(f"new_row={tableau[eq_i, :]}")
+                logger.info(f"new_row={tableau[eq_i, :]}")
 
-        _logger().info(f"{tableau=}")
+        logger.info(f"{tableau=}")
         f = tableau[-1, -1]
-        _logger().info(f"{f=}")
-        _logger().info(f"delta_f = {f - prev_f}")
+        logger.info(f"{f=}")
+        logger.info(f"delta_f = {f - prev_f}")
         prev_f = f
-    x = get_solution(tableau)
-    _logger().info(f"{x=}, {f=}")
-
-    return Solution(x, -f, C)
+    return tableau
 
 
 def get_solution(tableau: np.ndarray) -> np.ndarray:
     """
     Extracts the solution from the tableau.
 
-    :param tableau: The tableau
-    :return: The solution
+    :param tableau: The solved tableau
+    :return: The solution of the linear programming problem (values of the variables)
     """
     cnt_of_equations, cnt_of_variables = tableau.shape
     cnt_of_slack = cnt_of_equations - 1
@@ -180,8 +190,8 @@ def to_tableau(
             f"does not match the number of equations ({cnt_of_equations})"
         )
 
-    _logger().info(f"{cnt_of_equations=}")
-    _logger().info(f"{cnt_of_variables=}")
+    logger.info(f"{cnt_of_equations=}")
+    logger.info(f"{cnt_of_variables=}")
 
     tableau: np.ndarray = np.zeros(
         (cnt_of_equations + 1, cnt_of_variables + cnt_of_slack + 1)
