@@ -24,11 +24,10 @@ class Solution:
     A solution of the linear programming problem.
     """
 
-    x: np.ndarray
-    """A vector of values of the variables"""
     f: float
     """The value of the objective function"""
-
+    x: Optional[np.ndarray] = None
+    """A vector of values of the variables"""
     C: Optional[ObjectiveCoefficients] = None
 
     def __str__(self):
@@ -47,6 +46,7 @@ def solve_using_simplex_method(
     A: ConstraintCoefficients,
     b: RightHandSides,
     max_iterations: int = 1000,
+    ftol: float = 1e-8,
 ) -> Solution:
     """
     Solves the linear programming problem using the simplex method.
@@ -81,14 +81,25 @@ def solve_using_simplex_method(
     tableau = base_case_to_tableau(C, A, b)
     logger.info(f"Initial tableau:\n{tableau=}")
 
-    solved_tableau = _simplex(tableau, max_iterations=max_iterations)
+    solved_tableau, delta_f, iteration = _simplex(
+        tableau, max_iterations=max_iterations, ftol=ftol
+    )
+    logger.info(f"Solved tableau:\n{solved_tableau}")
+    logger.info(f"Solved in {iteration} iterations and error {delta_f}")
     f = -solved_tableau[-1, -1]
-    x = get_solution(solved_tableau)
-    logger.info(f"{x=}, {f=}")
-    return Solution(x, f, C)
+
+    if abs(delta_f) > 0:
+        logger.info("{f=}")
+        return Solution(f=f, C=C)
+    else:
+        x = get_solution(solved_tableau)
+        logger.info(f"{x=}, {f=}")
+        return Solution(x=x, f=f, C=C)
 
 
-def _simplex(tableau: np.ndarray, max_iterations: int):
+def _simplex(
+    tableau: np.ndarray, max_iterations: int, ftol: float
+) -> tuple[np.ndarray, float, int]:
     """
     Solves the linear programming problem using the simplex method.
 
@@ -99,6 +110,7 @@ def _simplex(tableau: np.ndarray, max_iterations: int):
     tableau = tableau.copy()
     iteration = 0
     prev_f = 0.0
+    delta_f = np.inf
     while not is_optimal(tableau):
         iteration += 1
         logger.info(f"Iteration {iteration}")
@@ -120,11 +132,17 @@ def _simplex(tableau: np.ndarray, max_iterations: int):
                 logger.info(f"new_row={tableau[eq_i, :]}")
 
         logger.info(f"{tableau=}")
-        f = tableau[-1, -1]
+        f = tableau[-1, -1].item()
         logger.info(f"{f=}")
-        logger.info(f"delta_f = {f - prev_f}")
+        delta_f = f - prev_f
+        logger.info(f"{delta_f=}")
+        if abs(delta_f) < ftol:
+            logger.info("Optimal solution found by tolerance")
+            break
         prev_f = f
-    return tableau
+    delta_f = f - prev_f
+
+    return tableau, delta_f, iteration
 
 
 def get_solution(tableau: np.ndarray) -> np.ndarray:
@@ -266,11 +284,11 @@ def find_pivot_row(tableau: np.ndarray, pivot_column: int) -> int:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    C = [1, 1, 0]
-    A = [[-1, 1, 1], [1, 0, 0], [0, 1, 0]]
-    b = [2, 4, 4]
+    C = [3, 9]
+    A = [[1, 4], [1, 2]]
+    b = [8, 4]
 
-    solution = solve_using_simplex_method(C, A, b)
+    solution = solve_using_simplex_method(C, A, b, ftol=0.1)
     print(solution)
     # [[-1  1  1  0  0  2]
     #  [ 1  0  0  1  0  4]
