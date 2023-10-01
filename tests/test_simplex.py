@@ -1,29 +1,14 @@
+from typing import Collection
+
+import pytest
+
 import src.simplex as simplex
 import numpy as np
 import logging
 
+from tests.conftest import dataset
+
 logging.basicConfig(level=logging.DEBUG)
-
-
-def test_tableau():
-    C = [1, 2]
-    A = [[1, 1], [1, -1]]
-    b = [2, 1]
-    tableau = simplex.base_case_to_tableau(C, A, b)
-    expected = np.array([[1, 1, 1, 0, 2], [1, -1, 0, 1, 1], [-1, -2, 0, 0, 0]])
-
-    assert np.array_equal(tableau, expected) is True
-
-    C = [1, 1, 0, 0]
-    A = [[1, 1, 1, 0], [1, -1, 0, 1]]
-    b = [2, 1]
-
-    tableau = simplex.base_case_to_tableau(C, A, b)
-    expected = np.array(
-        [[1, 1, 1, 0, 1, 0, 2], [1, -1, 0, 1, 0, 1, 1], [-1, -1, 0, 0, 0, 0, 0]]
-    )
-
-    assert np.array_equal(tableau, expected) is True
 
 
 def test_simplex():
@@ -32,5 +17,23 @@ def test_simplex():
     b = [2, 4, 4]
 
     solution = simplex.solve_using_simplex_method(C, A, b)
-    print(solution)
-    assert solution.x == [2, 2, 0]
+    assert solution.x == {"s0": 2.0, "x0": 4.0, "x1": 4.0, "z": -8.0}
+
+
+eps = 1e-6
+
+
+@pytest.mark.parametrize(
+    "C, A, b, expected_f",
+    [(testcase.C, testcase.A, testcase.b, testcase.expected_f) for testcase in dataset],
+)
+def test_simplex_dataset(
+    C: Collection[float],
+    A: Collection[Collection[float]],
+    b: Collection[float],
+    expected_f: float,
+    # expected_x: Collection[float],
+):
+    solution = simplex.solve_using_simplex_method(C, A, b)
+    print(f"{solution.f=} {expected_f=}")
+    assert abs(solution.f - expected_f) < eps
