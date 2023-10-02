@@ -2,6 +2,7 @@ from collections.abc import Collection
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 import logging
 from dataclasses import dataclass
 
@@ -26,51 +27,50 @@ class Solution:
 
     f: float
     """The value of the objective function"""
-    x: Optional[np.ndarray] = None
-    """A vector of values of the variables"""
+    x: dict[str, float]
+    """The values of the variables"""
     C: Optional[ObjectiveCoefficients] = None
 
     def __str__(self):
+        x = ", ".join([f"{k} = {v}" for k, v in self.x.items()])
         if self.C is None:
-            return f"x = {self.x}\nf = {self.f}"
+            return f"{x}\n" f"f = {self.f}"
         else:
             objective = [f"{c}*x{i}" for i, c in enumerate(self.C)]
             objective = " + ".join(objective)
             return (
-                f"Objective function: {objective}\n" f"x = {self.x}\n" f"f = {self.f}"
+                f"Objective function: {objective}\n" f"Solution: {x}\n" f"f = {self.f}"
             )
 
 
 class Tableau:
-    _tableau: np.ndarray
+    _tableau: pd.DataFrame
     """The tableau with the coefficients of the problem"""
-    _variable_cols: list[int]  # without the solution column
-    _variable_rows: list[int]  # without the z row
 
     @property
     def m(self):
-        return self._tableau
+        return self._tableau.values
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> pd.Series:
         """
         The row of the objective function. Without the solution column.
         """
-        return self._tableau[-1, :-1]
+        return self._tableau.iloc[-1, :-1]
 
     @property
-    def solution(self) -> np.ndarray:
+    def solution(self) -> pd.Series:
         """
         The column of the solution.
         """
-        return self._tableau[:, -1]
+        return self._tableau.solution
 
     @property
     def f(self) -> float:
         """
         The value of the objective function.
         """
-        return self.solution[-1].item()
+        return self.solution.iloc[-1]
 
     def is_optimal(self) -> bool:
         """
@@ -80,10 +80,12 @@ class Tableau:
         """
         return np.all(self.z <= 0)
 
-    def __init__(self, tableau: np.ndarray):
-        self._tableau = tableau
-        self._variable_cols = list(range(tableau.shape[1] - 1))
-        self._variable_rows = list(range(tableau.shape[0] - 1))
+    def __init__(self, tableau: np.ndarray, targets: int, slack: int):
+        targets = [f"x{i}" for i in range(targets)]
+        slack = [f"s{i}" for i in range(slack)]
+        self._tableau = pd.DataFrame(
+            tableau, columns=targets + slack + ["solution"], index=slack + ["z"]
+        )
 
     @classmethod
     def base_case_to_tableau(
@@ -127,13 +129,13 @@ class Tableau:
         A = np.array(A)
         b = np.array(b)
 
-        cnt_of_equations, cnt_of_variables = A.shape
+        cnt_of_equations, cnt_of_targets = A.shape
         cnt_of_slack = cnt_of_equations
 
-        if len(C) != cnt_of_variables:
+        if len(C) != cnt_of_targets:
             raise ValueError(
                 f"Number of coefficients of the objective function ({len(C)}) "
-                f"does not match the number of variables ({cnt_of_variables})"
+                f"does not match the number of variables ({cnt_of_targets})"
             )
 
         if len(b) != cnt_of_equations:
@@ -143,16 +145,16 @@ class Tableau:
             )
 
         logger.info(f"{cnt_of_equations=}")
-        logger.info(f"{cnt_of_variables=}")
+        logger.info(f"{cnt_of_targets=}")
 
         tableau: np.ndarray = np.zeros(
-            (cnt_of_equations + 1, cnt_of_variables + cnt_of_slack + 1)
+            (cnt_of_equations + 1, cnt_of_targets + cnt_of_slack + 1)
         )
-        tableau[-1, :cnt_of_variables] = C
-        tableau[:-1, :cnt_of_variables] = A
-        tableau[:-1, cnt_of_variables:-1] = np.eye(cnt_of_equations)
+        tableau[-1, :cnt_of_targets] = C
+        tableau[:-1, :cnt_of_targets] = A
+        tableau[:-1, cnt_of_targets:-1] = np.eye(cnt_of_equations)
         tableau[:-1, -1] = np.array(b)
-        return Tableau(tableau)
+        return Tableau(tableau, targets=cnt_of_targets, slack=cnt_of_slack)
 
     def find_pivot_column(self) -> int:
         """
@@ -172,14 +174,23 @@ class Tableau:
         :param pivot_column: The index of the pivot column
         :return: The index of the pivot row
         """
-        divisors = self._tableau[:-1, pivot_column]
+        divisors = self._tableau.iloc[:-1, pivot_column]
         restrictions = np.divide(
-            self._tableau[:-1, -1],
-            self._tableau[:-1, pivot_column],
+            self._tableau.iloc[:-1, -1],
+            self._tableau.iloc[:-1, pivot_column],
             out=np.full(len(divisors), np.inf),
             where=divisors > 0,
         )
         return np.argmin(restrictions)
+
+    def is_pivot_column_solvable(self, pivot_column: int) -> bool:
+        """
+        Checks if the pivot column is solvable.
+
+        :param pivot_column: The index of the pivot column
+        :return: True if the pivot column is solvable, False otherwise
+        """
+        return np.any(self._tableau.iloc[:-1, pivot_column] > 0)
 
     def swap_variable(self, pivot_row, pivot_column):
         """
@@ -189,15 +200,23 @@ class Tableau:
         :param pivot_column: Pivot column with tight variable
         """
 
-        pivot_value = self._tableau[pivot_row, pivot_column]
-        self._tableau[pivot_row, :] /= pivot_value
-
-    def __repr__(self):
-        _ = np.array2string(
-            self._tableau, precision=2, floatmode="fixed", prefix="Tableau(", suffix=")"
+        pivot_value = self._tableau.iloc[pivot_row, pivot_column]
+        self._tableau.iloc[pivot_row, :] /= pivot_value
+        # swap indices of the pivot row and pivot column
+        pivot_row_str = self._tableau.index[pivot_row]
+        pivot_column_str = self._tableau.columns[pivot_column]
+        logger.info(
+            f"Loose {pivot_row_str}(row {pivot_row}) and Tight {pivot_column_str}(col {pivot_column})"
         )
 
-        return "Tableau(" + _ + ")"
+        self._tableau.rename(
+            index={pivot_row_str: pivot_column_str, pivot_column_str: pivot_row_str},
+            columns={pivot_column_str: pivot_row_str, pivot_row_str: pivot_column_str},
+            inplace=True,
+        )
+
+    def __repr__(self):
+        return self._tableau.__repr__()
 
 
 def solve_using_simplex_method(
@@ -223,17 +242,17 @@ def solve_using_simplex_method(
     >>> b = [2, 4, 4]
     >>> solution = solve_using_simplex_method(C, A, b)
     >>> solution.x
-    array([4., 4., 2.])
+    {'s0': 2.0, 'x0': 4.0, 'x1': 4.0, 'z': -8.0}
     >>> solution.f
     8.0
 
     Example:
-    >>> C = [1.2, 1.7]
-    >>> A = [[1, 0], [0, 1], [1, 1]]
+    >>> C = [1.2, 1.7] # z = 1.2x1 + 1.7x2
+    >>> A = [[1, 0], [0, 1], [1, 1]] # x1 <= 3000, x2 <= 4000, x1 + x2 <= 5000
     >>> b = [3000, 4000, 5000]
     >>> solution = solve_using_simplex_method(C, A, b)
     >>> solution.x
-    array([1000., 4000.])
+    {'s1': 1000.0, 'x0': 2000.0, 'x1': 4000.0, 'z': -8000.0}
     >>> solution.f
     8000.0
     """
@@ -248,13 +267,7 @@ def solve_using_simplex_method(
 
     f = -solved_tableau.f
 
-    if abs(delta_f) > 0:
-        logger.info("{f=}")
-        return Solution(f=f, C=C)
-    else:
-        x = get_solution(solved_tableau.m)
-        logger.info(f"{x=}, {f=}")
-        return Solution(x=x, f=f, C=C)
+    return Solution(f=f, x=dict(solved_tableau.solution), C=C)
 
 
 def _simplex(
@@ -282,6 +295,15 @@ def _simplex(
 
         pivot_column = tableau.find_pivot_column()
         pivot_row = tableau.find_pivot_row(pivot_column)
+
+        if not tableau.is_pivot_column_solvable(pivot_column):
+            logger.info(
+                f"Unboundedness in iteration {iteration}: Column {pivot_column} has no positive values"
+            )
+            raise RuntimeError(
+                "The problem is not solvable because of the unboundedness.",
+            )
+
         # swap around pivot
         tableau.swap_variable(pivot_row=pivot_row, pivot_column=pivot_column)
         pivot_row_values = tableau.m[pivot_row, :]
@@ -291,6 +313,7 @@ def _simplex(
                 delta_row = pivot_row_values * tableau.m[eq_i, pivot_column]
                 tableau.m[eq_i, :] -= delta_row
 
+        logger.info(f"Tableau:\n{tableau}")
         f = tableau.f
         delta_f = f - prev_f
         if abs(delta_f) < ftol:
@@ -303,46 +326,43 @@ def _simplex(
 
 
 def get_cnts_of_variables(tableau: np.ndarray) -> tuple[int, int]:
-    """
-    Returns the number of variables, slack variables and artificial variables in the tableau.
+    """Returns the number of slack variables and target variables in the tableau."""
 
-    :param tableau: The tableau
-    :return: The number of variables, slack variables and artificial variables in the tableau
-    """
     cnt_of_equations, cnt_of_variables = tableau.shape
     cnt_of_slack = cnt_of_equations - 1
     cnt_of_target = cnt_of_variables - cnt_of_slack - 1
     return cnt_of_slack, cnt_of_target
 
 
-def get_solution(tableau: np.ndarray) -> np.ndarray:
-    """
-    Extracts the solution from the tableau.
-
-    :param tableau: The solved tableau
-    :return: The solution of the linear programming problem (values of the variables)
-    """
-    cnt_of_slack, cnt_of_target = get_cnts_of_variables(tableau)
-
-    x = np.zeros(cnt_of_target)
-
-    for i in range(cnt_of_target):
-        indices = np.where(tableau[:, i] == 1)[0]
-        solutions_for_variable = tableau[indices, -1]
-        if len(solutions_for_variable) == 1:
-            x[i] = solutions_for_variable[0]
-        elif len(solutions_for_variable) == 0:
-            x[i] = 0
-        else:
-            raise RuntimeError("The tableau is not optimal")
-    return x
+# def get_solution(tableau: np.ndarray) -> np.ndarray:
+#     """
+#     Extracts the solution from the tableau.
+#
+#     :param tableau: The solved tableau
+#     :return: The solution of the linear programming problem (values of the variables)
+#     """
+#     cnt_of_slack, cnt_of_target = get_cnts_of_variables(tableau)
+#
+#     x = np.zeros(cnt_of_target)
+#
+#     for i in range(cnt_of_target):
+#         indices = np.where(tableau[:, i] == 1)[0]
+#         solutions_for_variable = tableau[indices, -1]
+#         if len(solutions_for_variable) == 1:
+#             x[i] = solutions_for_variable[0]
+#         elif len(solutions_for_variable) == 0:
+#             x[i] = 0
+#         else:
+#             raise RuntimeError("The tableau is not optimal")
+#     return x
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    C = [3, 9]  # z = 3x1 + 9x2
-    A = [[1, 4], [1, 2]]  # x1 + 4x2 <= , x1 + 2x2 <= 4
-    b = [8, 4]
 
-    solution = solve_using_simplex_method(C, A, b, ftol=0.1)
+    C = [14, -4, 10]
+    A = [[7, -5, 8], [-3, 7, -13]]
+    b = [9, 11]
+
+    solution = solve_using_simplex_method(C, A, b, max_iterations=100)
     print(solution)
