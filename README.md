@@ -26,14 +26,14 @@ For the LPP in the following form:
 
 Maximize $f = c_1x_1 + c_2x_2 + ... + c_mx_m$ subject to following $n$ constraints:
 
-$
+$$
 \begin{cases}
     a_{11}x_1 + a_{12}x_1 + ... + a_{1m}x_m \le b_1 \\
     a_{21}x_1 + a_{22}x_1 + ... + a_{2m}x_m \le b_2 \\
     ... \\
     a_{n1}x_1 + a_{n2}x_1 + ... + a_{nm}x_m \le b_n
 \end{cases}
-$
+$$
 
 Input:
 - $c_1 \ \ c_2 \ \ ... \ \ c_m$ - as coefficients of the objective function,
