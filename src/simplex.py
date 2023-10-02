@@ -30,17 +30,33 @@ class Solution:
     x: dict[str, float]
     """The values of the variables"""
     C: Optional[ObjectiveCoefficients] = None
+    """The coefficients of the objective function"""
+    A: Optional[ConstraintCoefficients] = None
+    """The coefficients of the constraints"""
+    b: Optional[RightHandSides] = None
+    """The right-hand sides of the constraints"""
 
     def __str__(self):
-        x = ", ".join([f"{k} = {v}" for k, v in self.x.items()])
-        if self.C is None:
-            return f"{x}\n" f"f = {self.f}"
-        else:
+        result_string = []
+
+        if self.C is not None:
+            result_string.append("Objective function:")
             objective = [f"{c}*x{i}" for i, c in enumerate(self.C)]
             objective = " + ".join(objective)
-            return (
-                f"Objective function: {objective}\n" f"Solution: {x}\n" f"f = {self.f}"
-            )
+            result_string.append(objective)
+
+        if self.A is not None:
+            result_string.append("Constraints:")
+            for i, row in enumerate(self.A):
+                constraint = [f"{c}*x{i}" for i, c in enumerate(row)]
+                constraint = " + ".join(constraint)
+                result_string.append(f"{constraint} <= {self.b[i]}")
+
+        result_string.append("Solution:")
+        result_string.append(f"f = {self.f}")
+        result_string.append(", ".join([f"{k} = {v}" for k, v in self.x.items()]))
+
+        return "\n".join(result_string)
 
 
 class Tableau:
@@ -267,7 +283,7 @@ def solve_using_simplex_method(
 
     f = -solved_tableau.f
 
-    return Solution(f=f, x=dict(solved_tableau.solution), C=C)
+    return Solution(f=f, x=dict(solved_tableau.solution), C=C, A=A, b=b)
 
 
 def _simplex(
@@ -360,9 +376,9 @@ def get_cnts_of_variables(tableau: np.ndarray) -> tuple[int, int]:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
-    C = [14, -4, 10]
-    A = [[7, -5, 8], [-3, 7, -13]]
-    b = [9, 11]
+    C = [3, 4, 6]
+    A = [[-2, 2, 15], [11, 6, 14], [3, -8, 1]]
+    b = [12, 30, 24]
 
     solution = solve_using_simplex_method(C, A, b, max_iterations=100)
     print(solution)
