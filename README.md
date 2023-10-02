@@ -4,6 +4,8 @@
 
 Install python version 3.11+ (from [official website](www.python.org) or using `sudo apt-get install python3.11`).
 
+Make sure to add python to `PATH`.
+
 Run following commands:
 
 ```
@@ -11,7 +13,7 @@ pip3.11 install poetry
 poetry install
 ```
 
-The package `poetry` will automatically install dependencies for project.
+The package `poetry` will automatically install dependencies for project. If it's not you can follow other instructions from [official website](https://python-poetry.org/docs/).
 
 ## Usage
 
@@ -40,6 +42,57 @@ Input:
 - $n$ - as number of constraints,
 - $a_{i0} \ \ a_{i1} \ \ ... \ \ a_{im}$ - as coefficients of the $i$'th constraint,
 - $b_1 \ \ b_2 \ \ ... \ \ b_n$ - as coefficients of the right-hand side of the constraints
+
+
+### Output Format
+
+The output format is provided in the Solution class, which includes:
+
+Output:
+
+- Solved in $x$ iterations and error $xx.xx$
+- Objective function
+- Constraints
+- Solution:
+  - $f$: The value of the objective function,
+  - $x$: A dictionary containing the values of the variables,
+  - $s$: Represents the value of the slack variable
+  - $z$: Represents the value of the artificial variable 
+
+## Example
+
+Given the following `Linear Programming Problem`:
+
+$C = [1, 2]$
+
+$A = [[4, -2], [-1, 3], [-2, -4]]$
+
+$b = [12, 6, 16]$
+
+The solver produces the following `result`:
+
+Solved in 2 iterations and error 0.0
+
+Objective function:
+
+$1.0 * x_0 + 2.0 * x_1$
+
+Constraints:
+
+$4.0 * x_0 + -2.0 * x_1 <= 12.0$
+
+$-1.0 * x_0 + 3.0 * x_1 <= 6.0$
+
+$-2.0 * x_0 + -4.0 * x_1 <= 16.0$
+
+Solution:
+
+$f = 12.0$
+
+$x_0 = 4.8, x_1 = 3.6, s_2 = 40.0, z = -12.0$
+
+This demonstrates how to use the solver and showcases the output format.
+
 
 ## License
 
