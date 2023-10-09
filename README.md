@@ -1,10 +1,17 @@
 # Maximization LPP solver using Simplex method
 
+### Content
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Example](#example)
+- [License](#license)
+
 ## Installation
 
-Install python version 3.11+ (from [official website](www.python.org) or using `sudo apt-get install python3.11`).
+Install python version 3.11+. Make sure to add python to `PATH`.
 
-Make sure to add python to `PATH`.
+Using command line, go to the repo folder (`.../simplex/`).
 
 Run following commands:
 
@@ -61,7 +68,8 @@ Output:
 
 ## Example
 
-Given the following `Linear Programming Problem`:
+### Given
+Linear Programming Problem as follows:
 
 $C = [1, 2]$
 
@@ -69,7 +77,7 @@ $A = [[4, -2], [-1, 3], [-2, -4]]$
 
 $b = [12, 6, 16]$
 
-The solver produces the following `result`:
+### Result:
 
 Solved in 2 iterations and error 0.0
 
