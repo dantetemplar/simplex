@@ -15,7 +15,7 @@ Using command line, go to the repo folder (`.../simplex/`).
 
 Run following commands:
 
-```
+```bash
 pip3.11 install poetry
 poetry install
 ```
@@ -26,7 +26,7 @@ The package `poetry` will automatically install dependencies for project. If it'
 
 To run main program, use the following:
 
-```
+```bash
 poetry run python -m src
 ```
 
