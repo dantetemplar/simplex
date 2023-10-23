@@ -235,6 +235,23 @@ class Tableau:
         return self._tableau.__repr__()
 
 
+def check_if_problem_is_solvable(
+    _C: ObjectiveCoefficients, _A: ConstraintCoefficients, b: RightHandSides
+):
+    """
+    Checks if the linear programming problem is solvable.
+
+    :param _C: Vector of coefficients of the objective function
+    :param _A: Matrix of coefficients of the constraints
+    :param b: Vector of right-hand sides of the constraints
+    """
+
+    # check if right-hand sides are non-negative
+    if np.any(np.array(b) < 0):
+        raise RuntimeError("The problem is not solvable by Simplex because of the negativity of right-hand sides in "
+                           "constraints.")
+
+
 def solve_using_simplex_method(
     C: ObjectiveCoefficients,
     A: ConstraintCoefficients,
