@@ -27,7 +27,7 @@ class Solution:
 
     f: float
     """The value of the objective function"""
-    x: dict[str, float]
+    x: list[float]
     """The values of the variables"""
     C: Optional[ObjectiveCoefficients] = None
     """The coefficients of the objective function"""
@@ -40,7 +40,7 @@ class Solution:
         result_string = []
 
         if self.C is not None:
-            result_string.append("Objective function:")
+            result_string.append("Maximize Objective function:")
             objective = [f"{c}*x{i}" for i, c in enumerate(self.C)]
             objective = " + ".join(objective)
             result_string.append(objective)
@@ -54,7 +54,9 @@ class Solution:
 
         result_string.append("Solution:")
         result_string.append(f"f = {self.f}")
-        result_string.append(", ".join([f"{k} = {v}" for k, v in self.x.items()]))
+        result_string.append(
+            ", ".join([f"x{i} = {x_term}" for i, x_term in enumerate(self.x)])
+        )
 
         return "\n".join(result_string)
 
@@ -248,8 +250,10 @@ def check_if_problem_is_solvable(
 
     # check if right-hand sides are non-negative
     if np.any(np.array(b) < 0):
-        raise RuntimeError("The problem is not solvable by Simplex because of the negativity of right-hand sides in "
-                           "constraints.")
+        raise RuntimeError(
+            "The problem is not solvable by Simplex because of the negativity of right-hand sides in "
+            "constraints."
+        )
 
 
 def solve_using_simplex_method(
@@ -300,7 +304,9 @@ def solve_using_simplex_method(
 
     f = -solved_tableau.f
 
-    return Solution(f=f, x=dict(solved_tableau.solution), C=C, A=A, b=b)
+    x = list(get_solution(solved_tableau.m))
+
+    return Solution(f=f, x=x, C=C, A=A, b=b)
 
 
 def _simplex(
@@ -348,10 +354,10 @@ def _simplex(
 
         logger.info(f"Tableau:\n{tableau}")
         f = tableau.f
-        delta_f = f - prev_f
-        if abs(delta_f) < ftol:
-            logger.info("Optimal solution found by tolerance")
-            break
+        # delta_f = f - prev_f
+        # if abs(delta_f) < ftol:
+        #     logger.info("Optimal solution found by tolerance")
+        #     break
         prev_f = f
     delta_f = f - prev_f
 
@@ -367,27 +373,27 @@ def get_cnts_of_variables(tableau: np.ndarray) -> tuple[int, int]:
     return cnt_of_slack, cnt_of_target
 
 
-# def get_solution(tableau: np.ndarray) -> np.ndarray:
-#     """
-#     Extracts the solution from the tableau.
-#
-#     :param tableau: The solved tableau
-#     :return: The solution of the linear programming problem (values of the variables)
-#     """
-#     cnt_of_slack, cnt_of_target = get_cnts_of_variables(tableau)
-#
-#     x = np.zeros(cnt_of_target)
-#
-#     for i in range(cnt_of_target):
-#         indices = np.where(tableau[:, i] == 1)[0]
-#         solutions_for_variable = tableau[indices, -1]
-#         if len(solutions_for_variable) == 1:
-#             x[i] = solutions_for_variable[0]
-#         elif len(solutions_for_variable) == 0:
-#             x[i] = 0
-#         else:
-#             raise RuntimeError("The tableau is not optimal")
-#     return x
+def get_solution(tableau: np.ndarray) -> np.ndarray:
+    """
+    Extracts the solution from the tableau.
+
+    :param tableau: The solved tableau
+    :return: The solution of the linear programming problem (values of the variables)
+    """
+    cnt_of_slack, cnt_of_target = get_cnts_of_variables(tableau)
+
+    x = np.zeros(cnt_of_target)
+
+    for i in range(cnt_of_target):
+        indices = np.where(tableau[:, i] == 1)[0]
+        solutions_for_variable = tableau[indices, -1]
+        if len(solutions_for_variable) == 1:
+            x[i] = solutions_for_variable[0]
+        elif len(solutions_for_variable) == 0:
+            x[i] = 0
+        else:
+            raise RuntimeError("The tableau is not optimal")
+    return x
 
 
 if __name__ == "__main__":
