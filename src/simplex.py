@@ -7,10 +7,6 @@ import logging
 from dataclasses import dataclass
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-
 ObjectiveCoefficients = Collection[float]
 """A vector of coefficients of the objective function"""
 ConstraintCoefficients = Collection[Collection[float]]
@@ -47,10 +43,10 @@ class Solution:
 
         if self.A is not None:
             result_string.append("Constraints:")
-            for i, row in enumerate(self.A):
+            for i, (row, right_hand_side) in enumerate(zip(self.A, self.b)):
                 constraint = [f"{c}*x{i}" for i, c in enumerate(row)]
                 constraint = " + ".join(constraint)
-                result_string.append(f"{constraint} <= {self.b[i]}")
+                result_string.append(f"{constraint} <= {right_hand_side}")
 
         result_string.append("Solution:")
         result_string.append(f"f = {self.f}")
@@ -162,8 +158,8 @@ class Tableau:
                 f"does not match the number of equations ({cnt_of_equations})"
             )
 
-        logger.info(f"{cnt_of_equations=}")
-        logger.info(f"{cnt_of_targets=}")
+        logging.info(f"{cnt_of_equations=}")
+        logging.info(f"{cnt_of_targets=}")
 
         tableau: np.ndarray = np.zeros(
             (cnt_of_equations + 1, cnt_of_targets + cnt_of_slack + 1)
@@ -223,7 +219,7 @@ class Tableau:
         # swap indices of the pivot row and pivot column
         pivot_row_str = self._tableau.index[pivot_row]
         pivot_column_str = self._tableau.columns[pivot_column]
-        logger.info(
+        logging.info(
             f"Loose {pivot_row_str}(row {pivot_row}) and Tight {pivot_column_str}(col {pivot_column})"
         )
 
@@ -261,12 +257,10 @@ def solve_using_simplex_method(
     A: ConstraintCoefficients,
     b: RightHandSides,
     max_iterations: int = 1000,
-    ftol: float = 1e-8,
 ) -> Solution:
     """
     Solves the linear programming problem using the simplex method.
 
-    :param ftol: Tolerance of the objective function
     :param C: A vector of coefficients of the objective function
     :param A: A matrix of coefficients of the constraints
     :param b: A vector of right-hand sides of the constraints
@@ -295,12 +289,12 @@ def solve_using_simplex_method(
     """
 
     tableau = Tableau.base_case_to_tableau(C, A, b)
-    logger.info(f"Initial tableau:\n{tableau}")
+    logging.info(f"Initial tableau:\n{tableau}")
 
     solved_tableau, delta_f, iteration = _simplex(
-        tableau, max_iterations=max_iterations, ftol=ftol
+        tableau, max_iterations=max_iterations
     )
-    logger.info(f"Solved in {iteration} iterations and error {delta_f}")
+    logging.info(f"Solved in {iteration} iterations and error {delta_f}")
 
     f = -solved_tableau.f
 
@@ -309,9 +303,7 @@ def solve_using_simplex_method(
     return Solution(f=f, x=x, C=C, A=A, b=b)
 
 
-def _simplex(
-    tableau: Tableau, max_iterations: int, ftol: float
-) -> tuple[Tableau, float, int]:
+def _simplex(tableau: Tableau, max_iterations: int) -> tuple[Tableau, float, int]:
     """
     Solves the linear programming problem using the simplex method.
 
@@ -327,7 +319,7 @@ def _simplex(
 
     while not tableau.is_optimal():
         iteration += 1
-        logger.info(f"Iteration {iteration}")
+        logging.info(f"Iteration {iteration}")
 
         if iteration > max_iterations:
             raise RuntimeError("Maximum number of iterations exceeded")
@@ -336,7 +328,7 @@ def _simplex(
         pivot_row = tableau.find_pivot_row(pivot_column)
 
         if not tableau.is_pivot_column_solvable(pivot_column):
-            logger.info(
+            logging.info(
                 f"Unboundedness in iteration {iteration}: Column {pivot_column} has no positive values"
             )
             raise RuntimeError(
@@ -352,11 +344,11 @@ def _simplex(
                 delta_row = pivot_row_values * tableau.m[eq_i, pivot_column]
                 tableau.m[eq_i, :] -= delta_row
 
-        logger.info(f"Tableau:\n{tableau}")
+        logging.info(f"Tableau:\n{tableau}")
         f = tableau.f
         # delta_f = f - prev_f
         # if abs(delta_f) < ftol:
-        #     logger.info("Optimal solution found by tolerance")
+        #     logging.info("Optimal solution found by tolerance")
         #     break
         prev_f = f
     delta_f = f - prev_f
