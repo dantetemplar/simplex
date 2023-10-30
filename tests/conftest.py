@@ -60,10 +60,10 @@ def test_pipeline(C, A, b, F):
 
 
 # 1 Answer: F=12 X=(24/5, 18/5) max
-С = [1, 2]
+C = [1, 2]
 A = [[4, -2], [-1, 3], [-2, -4]]
 b = [12, 6, 16]
-test_pipeline(С, A, b, 12)
+test_pipeline(C, A, b, 12)
 
 # 2 Answer: F=27/2 X=(0, 9/4, 0) max
 C = [3, 6, 2]

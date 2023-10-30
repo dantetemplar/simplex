@@ -59,6 +59,8 @@ if __name__ == "__main__":
         C=user_input.C,
         A=user_input.A,
         b=user_input.b,
+        number_of_targets=user_input.number_of_variables,
+        number_of_constraints=user_input.number_of_constraints,
     )
 
     problem.augment()
@@ -69,6 +71,6 @@ if __name__ == "__main__":
             "constraints."
         )
 
-    solution = solve_using_simplex_method(problem.C, problem.A, problem.b)
+    solution = solve_using_simplex_method(problem)
 
     deinit()
