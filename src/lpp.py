@@ -53,20 +53,68 @@ class Solution:
         return "\n".join(result_string)
 
 
-def check_if_problem_is_solvable(
-    _C: ObjectiveCoefficients, _A: ConstraintCoefficients, b: RightHandSides
-):
-    """
-    Checks if the linear programming problem is solvable.
+class Problem:
+    __slots__ = (
+        "C",
+        "A",
+        "b",
+        "is_augmented",
+        "number_of_targets",
+        "number_of_constraints",
+    )
 
-    :param _C: Vector of coefficients of the objective function
-    :param _A: Matrix of coefficients of the constraints
-    :param b: Vector of right-hand sides of the constraints
-    """
+    C: np.ndarray
+    A: np.ndarray
+    b: np.ndarray
+    is_augmented: bool
+    number_of_targets: Optional[int]
+    number_of_constraints: Optional[int]
 
-    # check if right-hand sides are non-negative
-    if np.any(np.array(b) < 0):
-        raise RuntimeError(
-            "The problem is not solvable by Simplex because of the negativity of right-hand sides in "
-            "constraints."
+    def __init__(
+        self,
+        C: ObjectiveCoefficients,
+        A: ConstraintCoefficients,
+        b: RightHandSides,
+        number_of_targets: Optional[int] = None,
+        number_of_constraints: Optional[int] = None,
+    ):
+        self.C = np.array(C)
+        self.A = np.array(A)
+        self.b = np.array(b)
+        self.is_augmented = False
+
+        if number_of_targets is None:
+            number_of_targets = self.C.shape[0]
+
+        if number_of_constraints is None:
+            number_of_constraints = self.A.shape[0]
+
+        self.number_of_targets = number_of_targets
+        self.number_of_constraints = number_of_constraints
+
+    @staticmethod
+    def augment_problem(
+        problem: "Problem",
+    ):
+        """
+        Augments the problem with slack variables.
+        """
+
+        if problem.is_augmented:
+            return
+
+        problem.C = np.concatenate((problem.C, np.zeros(problem.number_of_constraints)))
+        problem.A = np.concatenate(
+            (problem.A, np.eye(problem.number_of_constraints)), axis=1
         )
+        problem.is_augmented = True
+
+    def augment(self):
+        """
+        Augments the problem with slack variables.
+        """
+        Problem.augment_problem(self)
+
+    @property
+    def solvable(self):
+        return np.all(self.b >= 0)
