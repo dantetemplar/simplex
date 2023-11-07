@@ -46,10 +46,10 @@ Where:
 
 $$
 \begin{cases}
-    a_{11}x_1 + a_{12}x_1 + ... + a_{1n}x_n \lesseqgtr b_1 \\
-    a_{21}x_1 + a_{22}x_1 + ... + a_{2n}x_n \lesseqgtr b_2 \\
+    a_{11}x_1 + a_{12}x_1 + ... + a_{1n}x_n \lessgtr b_1 \\
+    a_{21}x_1 + a_{22}x_1 + ... + a_{2n}x_n \lessgtr b_2 \\
     ... \\
-    a_{m1}x_1 + a_{m2}x_1 + ... + a_{mn}x_n \lesseqgtr b_m
+    a_{m1}x_1 + a_{m2}x_1 + ... + a_{mn}x_n \lessgtr b_m
 \end{cases}
 $$
 
