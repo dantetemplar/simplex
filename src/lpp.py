@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Collection
+from typing import Optional, Collection, Literal
 
 import numpy as np
 
@@ -27,15 +27,23 @@ class Solution:
     """The coefficients of the constraints"""
     b: Optional[RightHandSides] = None
     """The right-hand sides of the constraints"""
+    type: Literal['Maximize', 'Minimize'] = 'Maximize'
+    """The right-hand sides of the constraints"""
 
     def __str__(self):
         result_string = []
 
         if self.C is not None:
-            result_string.append("Maximize Objective function:")
-            objective = [f"{c}*x{i}" for i, c in enumerate(self.C)]
-            objective = " + ".join(objective)
-            result_string.append(objective)
+            objective = ""
+            if self.type is not None:
+                result_string.append(self.type + " objective function:")
+                if self.type == 'Minimize':
+                    result_string.append(" + ".join([f"{-c}*x{i}" for i, c in enumerate(self.C)]))
+                else:
+                    result_string.append(" + ".join([f"{c}*x{i}" for i, c in enumerate(self.C)]))
+            else:
+                result_string.append("Maximize objective function:")
+                result_string.append(" + ".join([f"{c}*x{i}" for i, c in enumerate(self.C)]))
 
         if self.A is not None:
             result_string.append("Constraints:")
@@ -45,9 +53,12 @@ class Solution:
                 result_string.append(f"{constraint} <= {right_hand_side}")
 
         result_string.append("Solution:")
-        result_string.append(f"f = {self.f}")
+        if self.type is not None and self.type == 'Minimize':
+            result_string.append(f"f = {-self.f}")
+        else:
+            result_string.append(f"f = {self.f}")
         result_string.append(
-            ", ".join([f"x{i} = {x_term}" for i, x_term in enumerate(self.x)])
+            ", ".join([f"x{i} = {x_term:.10f}" for i, x_term in enumerate(self.x)])
         )
 
         return "\n".join(result_string)
@@ -114,6 +125,16 @@ class Problem:
         Augments the problem with slack variables.
         """
         Problem.augment_problem(self)
+
+    def is_feasible(self, solution: np.ndarray) -> bool:
+        """
+        Checks whether a given solution is feasible for given problem
+        """
+        if solution.shape[0] != self.number_of_targets:
+            return False
+        if self.is_augmented:
+            solution = np.concatenate((solution, np.zeros(self.number_of_constraints)))
+        return np.all(self.A @ solution <= self.b)
 
     @property
     def solvable(self):

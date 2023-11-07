@@ -2,16 +2,21 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
+import numpy as np
+
 from src.interface import (
     read_equation_type,
     read_number_of_variables,
     read_number_of_constraints,
     read_coefficients_of_objective_function,
-    read_coefficients_of_constraints,
-    read_coefficients_of_right_hand_side,
+    read_constraints,
+    read_interior_point_trial_solution
+    # read_coefficients_of_constraints,
+    # read_coefficients_of_right_hand_side,
 )
 from src.lpp import Problem
-from src.simplex import solve_using_simplex_method
+# from src.simplex import solve_using_simplex_method
+from interior_point import solve_using_interior_point_method, augment_trial_solution
 
 
 @dataclass
@@ -30,8 +35,7 @@ def read_input() -> UserInput:
     number_of_constraints = read_number_of_constraints()
 
     C = read_coefficients_of_objective_function(number_of_variables)
-    A = read_coefficients_of_constraints(number_of_variables, number_of_constraints)
-    b = read_coefficients_of_right_hand_side(number_of_constraints)
+    A, b = read_constraints(number_of_variables, number_of_constraints)
 
     return UserInput(
         equation_type=equation_type,
@@ -65,6 +69,16 @@ if __name__ == "__main__":
 
     problem.augment()
 
+    trial_solution = None
+
+    while True:
+        trial_solution = np.array(read_interior_point_trial_solution(user_input.number_of_variables))
+        if problem.is_feasible(trial_solution):
+            break
+
+    trial_solution = augment_trial_solution(problem, trial_solution)
+
+    '''
     if not problem.solvable:
         raise RuntimeError(
             "The problem is not solvable by Simplex because of the negativity of right-hand sides in "
@@ -72,5 +86,11 @@ if __name__ == "__main__":
         )
 
     solution = solve_using_simplex_method(problem)
+    '''
+
+    solution = solve_using_interior_point_method(problem, first_trial_solution=trial_solution)
+    solution.type = 'Maximize' if user_input.equation_type == "max" else 'Minimize'
+
+    print(solution)
 
     deinit()

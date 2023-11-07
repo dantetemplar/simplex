@@ -79,14 +79,17 @@ def read_constraints(
             try:
                 raw = input(
                     f"Enter {i} constraint: {number_of_variables} coefficients, sign (\"<\" or \">\"), "
-                    f"then right-hand side coefficient:\n"
-                ).split(),
+                    f"then right-hand side coefficient, everything separated by whitespace:\n"
+                ).split()
                 if len(raw) < 3:
+                    print('1', len(raw), raw)
                     raise ValueError
                 if raw[-2] not in '<>':
+                    print('2')
                     raise ValueError
                 constraint = [c if '<' in raw[-2] else -c for c in map(float, raw[:-2])]
                 if len(constraint) != number_of_variables:
+                    print('3')
                     raise ValueError
                 rhs = float(raw[-1]) if '<' in raw[-2] else -float(raw[-1])
                 return constraint, rhs
@@ -103,6 +106,24 @@ def read_constraints(
         rhs_coefficients.append(rhs_i)
 
     return constraints, rhs_coefficients
+
+
+def read_interior_point_trial_solution(number_of_variables) -> list[float]:
+    while True:
+        try:
+            trial_solution = list(map(float, input(
+                f"Enter feasible trial solution: values of {number_of_variables} variables, separated by whitespace:\n"
+            ).split()))
+            if len(trial_solution) != number_of_variables:
+                raise ValueError
+            return trial_solution
+        except ValueError:
+            print(
+                Fore.RED
+                + f"Invalid number of coefficients. Please enter exactly {number_of_variables} coefficients. "
+                + Style.RESET_ALL
+            )
+
 
 '''
 def read_coefficients_of_constraints(
