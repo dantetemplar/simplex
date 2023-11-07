@@ -10,7 +10,7 @@ from src.interface import (
     read_coefficients_of_constraints,
     read_coefficients_of_right_hand_side,
 )
-from src.lpp import check_if_problem_is_solvable, Problem
+from src.lpp import Problem
 from src.simplex import solve_using_simplex_method
 
 

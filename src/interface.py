@@ -68,6 +68,43 @@ def read_coefficients_of_objective_function(number_of_variables: int) -> list[fl
             )
 
 
+def read_constraints(
+    number_of_variables: int, number_of_constraints: int
+) -> tuple[list[list[float]], list[float]]:
+    constraints: list[list[float]] = []
+    rhs_coefficients: list[float] = []
+
+    def read_constraint(i: int) -> tuple[list[float], float]:
+        while True:
+            try:
+                raw = input(
+                    f"Enter {i} constraint: {number_of_variables} coefficients, sign (\"<\" or \">\"), "
+                    f"then right-hand side coefficient:\n"
+                ).split(),
+                if len(raw) < 3:
+                    raise ValueError
+                if raw[-2] not in '<>':
+                    raise ValueError
+                constraint = [c if '<' in raw[-2] else -c for c in map(float, raw[:-2])]
+                if len(constraint) != number_of_variables:
+                    raise ValueError
+                rhs = float(raw[-1]) if '<' in raw[-2] else -float(raw[-1])
+                return constraint, rhs
+            except ValueError:
+                print(
+                    Fore.RED
+                    + f"Invalid input."
+                    + Style.RESET_ALL
+                )
+
+    for i in range(number_of_constraints):
+        constraint_i, rhs_i = read_constraint(i)
+        constraints.append(constraint_i)
+        rhs_coefficients.append(rhs_i)
+
+    return constraints, rhs_coefficients
+
+'''
 def read_coefficients_of_constraints(
     number_of_variables: int, number_of_constraints: int
 ) -> list[list[float]]:
@@ -80,7 +117,7 @@ def read_coefficients_of_constraints(
                     map(
                         float,
                         input(
-                            f"Enter the coefficients of the {i} constraint(separate by whitespace, "
+                            f"Enter the coefficients of the {i} constraint (separate by whitespace, "
                             f"{number_of_variables} coefficients):\n"
                         ).split(),
                     )
@@ -122,3 +159,4 @@ def read_coefficients_of_right_hand_side(number_of_constraints: int) -> list[flo
                 + f"Invalid number of coefficients. Please enter exactly {number_of_constraints} coefficients. "
                 + Style.RESET_ALL
             )
+'''

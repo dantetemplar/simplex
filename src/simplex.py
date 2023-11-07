@@ -159,7 +159,7 @@ def solve_using_simplex_method(
 
     x = list(get_solution(solved_tableau.m))
 
-    return Solution(f=f, x=x, C=C, A=A, b=b)
+    return Solution(f=f, x=x, C=problem.C, A=problem.A, b=problem.b)
 
 
 def _simplex(tableau: Tableau, max_iterations: int) -> tuple[Tableau, float, int]:
