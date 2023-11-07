@@ -1,4 +1,4 @@
-# Maximization LPP solver using Simplex method
+# Implementation of Interior-Point algorithm
 
 ### Content
 
@@ -31,24 +31,34 @@ poetry run python -m src
 ```
 
 ### Input format
-For the LPP in the following form:
+Solves the LPP in the following form:
 
-Maximize $f = c_1x_1 + c_2x_2 + ... + c_mx_m$ subject to following $n$ constraints:
+#### Objective function:
+Maximize or minimize $f = c_1x_1 + c_2x_2 + ... + c_nx_n$
+
+Where:
+
+- $c_1 \ \ c_2 \ \ ... \ \ c_n$ are coefficients associated with decision variables $x_1 \ \ x_2 \ \ ... \ \ x_n$
+- $x_1 \ \ x_2 \ \ ... \ \ x_n$ are the decision variables to be determined.
+
+#### Subjected to the following constraints:
+
 
 $$
 \begin{cases}
-    a_{11}x_1 + a_{12}x_1 + ... + a_{1m}x_m \le b_1 \\
-    a_{21}x_1 + a_{22}x_1 + ... + a_{2m}x_m \le b_2 \\
+    a_{11}x_1 + a_{12}x_1 + ... + a_{1n}x_n \lesseqgtr b_1 \\
+    a_{21}x_1 + a_{22}x_1 + ... + a_{2n}x_n \lesseqgtr b_2 \\
     ... \\
-    a_{n1}x_1 + a_{n2}x_1 + ... + a_{nm}x_m \le b_n
+    a_{m1}x_1 + a_{m2}x_1 + ... + a_{mn}x_n \lesseqgtr b_m
 \end{cases}
 $$
 
-Input:
-- $c_1 \ \ c_2 \ \ ... \ \ c_m$ - as coefficients of the objective function,
-- $n$ - as number of constraints,
-- $a_{i0} \ \ a_{i1} \ \ ... \ \ a_{im}$ - as coefficients of the $i$'th constraint,
-- $b_1 \ \ b_2 \ \ ... \ \ b_n$ - as coefficients of the right-hand side of the constraints
+Where:
+
+- $a_{ij}$ represents coefficients associated with the $j$th decision variable ($x_j$) is a constraint.
+- $b_i$ - are constants associated with each constraint.
+- $m$ - represents the number of constraints.
+- $n$ is the number of decision variables.
 
 
 ### Output Format
@@ -56,50 +66,62 @@ Input:
 The output format is provided in the Solution class, which includes:
 
 Output:
-
-- Solved in $x$ iterations and error $xx.xx$
-- Objective function
-- Constraints
-- Solution:
-  - $f$: The value of the objective function,
-  - $x$: A dictionary containing the values of the variables,
-  - $s$: Represents the value of the slack variable
-  - $z$: Represents the value of the artificial variable 
+- Optimum of objective function $f(x)$
+- $x$: optimal values of the variables
 
 ## Example
 
 ### Given
 Linear Programming Problem as follows:
 
-$C = [1, 2]$
+Maximize: $F (x_1, x_2) = x_1 + x_2$
 
-$A = [[4, -2], [-1, 3], [-2, -4]]$
+subjectec to: $x_1 + 2x_2 + 3x_3 = 6$
 
-$b = [12, 6, 16]$
+$$
+\begin{cases}
+  2x_1 + 4x_2 \le 16 \\
+  x_1 + 3x_2 \ge 9 \\
+  x_1, x_2 \ge 0
+\end{cases}
+$$
+
+initial trial solution $(x_1, x_2) = (0.5, 3.5)$
+
+
 
 ### Result:
 
 Solved in 2 iterations and error 0.0
 
-Objective function:
+Objective function optimum: $F(x) = 6.999942864694068$, when $(x_1, x_2) = (0.0000571353, 0.0000571353)$
 
-$1.0 * x_0 + 2.0 * x_1$
 
-Constraints:
-
-$4.0 * x_0 + -2.0 * x_1 <= 12.0$
-
-$-1.0 * x_0 + 3.0 * x_1 <= 6.0$
-
-$-2.0 * x_0 + -4.0 * x_1 <= 16.0$
-
+### Full input and output:
+```
+Enter the type of equation (`max`, `min`, or just Enter for `max`):
+max
+Enter the number of variables:
+2
+Enter the number of constraints:
+2
+Enter the coefficients of the objective function(separate by whitespace, 2 coefficients):
+1 1
+Enter 0 constraint: 2 coefficients, sign ("<" or ">"), then right-hand side coefficient, everything separated by whitespace:
+2 4 < 16
+Enter 1 constraint: 2 coefficients, sign ("<" or ">"), then right-hand side coefficient, everything separated by whitespace:
+1 3 > 9
+Enter feasible trial solution: values of 2 variables, separated by whitespace:
+0.5 3.5
+Maximize objective function:               
+1.0*x0 + 1.0*x1 + 0.0*x2 + 0.0*x3          
+Constraints:                               
+2.0*x0 + 4.0*x1 + 1.0*x2 + 0.0*x3 <= 16.0  
+-1.0*x0 + -3.0*x1 + 0.0*x2 + 1.0*x3 <= -9.0
 Solution:
-
-$f = 12.0$
-
-$x_0 = 4.8, x_1 = 3.6, s_2 = 40.0, z = -12.0$
-
-This demonstrates how to use the solver and showcases the output format.
+f = 6.999942864694068
+x0 = 0.0000571353, x1 = 0.0000571353
+```
 
 
 ## License
