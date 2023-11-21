@@ -16,7 +16,7 @@ Using command line, go to the repo folder (`.../simplex/`).
 Run following commands:
 
 ```bash
-pip3 install poetry
+pip3.11 install poetry
 poetry install
 ```
 
