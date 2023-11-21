@@ -45,16 +45,14 @@ $$
 
 **Supply constraints**:
 
-$$
-\sum_{j=1}^{n} x_{ij} = S_i
-$$
+$\sum_{j=1}^{n} x_{ij} = S_i$
+
 for $i = 1, 2, ... m$
 
 **Demand constraints**:
 
-$$
-\sum_{j=1}^{m}x_{ij} = D_i
-$$
+$\sum_{j=1}^{m}x_{ij} = D_i $
+
 for $j = 1, 2, ... n$
 
 
