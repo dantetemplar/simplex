@@ -37,24 +37,20 @@ Solves the Transportation problem in the following form:
 
 The objective function is to minimize the total transportation cost minimize
 
-$$
-Z = \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} \cdot x_{ij}
-$$
+$$ Z = \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} \cdot x_{ij} $$
 
 #### Subjected to the following constraints:
 
 **Supply constraints**:
 
-$$
-\sum_{j=1}^{n} x_{ij} = S_i
-$$
+$$  \sum_{j=1}^{n} x_{ij} = S_i $$
+
 for $i = 1, 2, ... m$
 
 **Demand constraints**:
 
-$$
-\sum_{j=1}^{m}x_{ij} = D_i
-$$
+$$ \sum_{j=1}^{m}x_{ij} = D_i $$
+
 for $j = 1, 2, ... n$
 
 
