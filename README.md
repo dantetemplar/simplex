@@ -31,34 +31,41 @@ poetry run python -m src
 ```
 
 ### Input format
-Solves the LPP in the following form:
+Solves the Transportation problem in the following form:
 
 #### Objective function:
-Maximize or minimize $f = c_1x_1 + c_2x_2 + ... + c_nx_n$
 
-Where:
+The objective function is to minimize the total transportation cost minimize
 
-- $c_1 \ \ c_2 \ \ ... \ \ c_n$ are coefficients associated with decision variables $x_1 \ \ x_2 \ \ ... \ \ x_n$
-- $x_1 \ \ x_2 \ \ ... \ \ x_n$ are the decision variables to be determined.
+$$
+Z = \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} \cdot x_{ij}
+$$
 
 #### Subjected to the following constraints:
 
+**Supply constraints**:
 
 $$
-\begin{cases}
-    a_{11}x_1 + a_{12}x_1 + ... + a_{1n}x_n \lessgtr b_1 \\
-    a_{21}x_1 + a_{22}x_1 + ... + a_{2n}x_n \lessgtr b_2 \\
-    ... \\
-    a_{m1}x_1 + a_{m2}x_1 + ... + a_{mn}x_n \lessgtr b_m
-\end{cases}
+\sum_{j=1}^{n} x_{ij} = S_i
 $$
+for $i = 1, 2, ... m$
+
+**Demand constraints**:
+
+$$
+\sum_{j=1}^{m}x_{ij} = D_i
+$$
+for $j = 1, 2, ... n$
+
+
+**Non-negativity constraints:** $x_{ij} \geq 0$, for $i = 1, 2, ...,m$ and $j = 1, 2, ..., n$
+
 
 Where:
-
-- $a_{ij}$ represents coefficients associated with the $j$th decision variable ($x_j$) is a constraint.
-- $b_i$ - are constants associated with each constraint.
-- $m$ - represents the number of constraints.
-- $n$ is the number of decision variables.
+- $S_i$: Supply at supplier $i$
+- $D_j$:  Demand at consumer $j$
+- $c_{ij}$: Cost of transporting one unit from supplier $i$ to consumer $j$
+- $x_{ij}$: Quantity of goods transported from supplier $i$ to consumer $j$
 
 
 ### Output Format
@@ -67,60 +74,49 @@ The output format is provided in the Solution class, which includes:
 
 Output:
 - Optimum of objective function $f(x)$
-- $x$: optimal values of the variables
+- Sequence of paths in the table to acphieve optimum
 
 ## Example
 
 ### Given
-Linear Programming Problem as follows:
+Linear Transportation problem as follows:
 
-Maximize: $F (x_1, x_2) = x_1 + x_2$
-
-subjectec to: $x_1 + 2x_2 + 3x_3 = 6$
-
-$$
-\begin{cases}
-  2x_1 + 4x_2 \le 16 \\
-  x_1 + 3x_2 \ge 9 \\
-  x_1, x_2 \ge 0
-\end{cases}
-$$
-
-initial trial solution $(x_1, x_2) = (0.5, 3.5)$
-
-
-
+![Alt text](img/image.png)
 ### Result:
 
-Solved in 2 iterations and error 0.0
+Solved using The Northwest Corner Rule:
 
-Objective function optimum: $F(x) = 6.999942864694068$, when $(x_1, x_2) = (0.0000571353, 0.0000571353)$
-
+![Alt text](img/image2.png)
+* Total cost = 2 * 60 + 3 * 70 + 4 * 10 + 1 * 110 + 4 * 70 + 7 * 60 + 2 * 100 = 1380
 
 ### Full input and output:
 ```
-Enter the type of equation (`max`, `min`, or just Enter for `max`):
-max
-Enter the number of variables:
-2
-Enter the number of constraints:
-2
-Enter the coefficients of the objective function(separate by whitespace, 2 coefficients):
-1 1
-Enter 0 constraint: 2 coefficients, sign ("<" or ">"), then right-hand side coefficient, everything separated by whitespace:
-2 4 < 16
-Enter 1 constraint: 2 coefficients, sign ("<" or ">"), then right-hand side coefficient, everything separated by whitespace:
-1 3 > 9
-Enter feasible trial solution: values of 2 variables, separated by whitespace:
-0.5 3.5
-Maximize objective function:               
-1.0*x0 + 1.0*x1 + 0.0*x2 + 0.0*x3          
-Constraints:                               
-2.0*x0 + 4.0*x1 + 1.0*x2 + 0.0*x3 <= 16.0  
--1.0*x0 + -3.0*x1 + 0.0*x2 + 1.0*x3 <= -9.0
+Enter the number of supplies (default: 3):
+
+Enter the number of demands (default: 4):
+5
+Enter Supplies (separate by whitespace, 3 float coefficients):
+140 180 160
+Enter Demands (separate by whitespace, 5 float coefficients):
+60 70 120 130 100
+Enter distribution unit cost for supply 0 (separate by whitespace, 5 float coefficients):
+2 3 4 2 4
+Enter distribution unit cost for supply 1 (separate by whitespace, 5 float coefficients):
+8 4 1 4 1
+Enter distribution unit cost for supply 2 (separate by whitespace, 5 float coefficients):
+9 7 3 7 2
+Enter the method of transportation problem (`northwest`, `vogel`, `russel`, or just Enter for `northwest`):
+
 Solution:
-f = 6.999942864694068
-x0 = 0.0000571353, x1 = 0.0000571353
+Cost = 1380.0
+Choices:
+60.0 from S1 to D1
+70.0 from S1 to D2
+10.0 from S1 to D3
+110.0 from S2 to D3
+70.0 from S2 to D4
+60.0 from S3 to D4
+100.0 from S3 to D5
 ```
 
 
