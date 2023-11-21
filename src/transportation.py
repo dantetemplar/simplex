@@ -127,17 +127,15 @@ def solve_using_vogel(
 
         for i in range(num_rows):
             from_row[i, :] = np.sort(from_row[i, :])
-            min_from_row[i] = next((x for x in from_row[i, :] if x != np.inf), np.inf)
-            prev_min_from_row[i] = next(
-                (x for x in from_row[i, :] if x != min_from_row[i]), np.inf
-            )
+            iterator = (x for x in from_row[i, :] if x != np.inf)
+            min_from_row[i] = next(iterator, np.inf)
+            prev_min_from_row[i] = next(iterator, np.inf)
 
         for j in range(num_cols):
             from_col[:, j] = np.sort(from_col[:, j])
-            min_from_col[j] = next((x for x in from_col[:, j] if x != np.inf), np.inf)
-            prev_min_from_col[j] = next(
-                (x for x in from_col[:, j] if x != min_from_col[j]), np.inf
-            )
+            iterator = (x for x in from_col[:, j] if x != np.inf)
+            min_from_col[j] = next(iterator, np.inf)
+            prev_min_from_col[j] = next(iterator, np.inf)
 
         with np.errstate(invalid="ignore"):
             diff_from_row = np.subtract(
@@ -377,6 +375,6 @@ if __name__ == "__main__":
         demands=pd.Series([30, 20, 70, 30, 60], index=destinations),
     )
 
-    solution = solve_using_north_west_corner(problem)
+    solution = solve_using_vogel(problem)
 
     print(solution)
