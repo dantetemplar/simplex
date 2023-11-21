@@ -41,11 +41,6 @@ $$
 Z = \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} \cdot x_{ij}
 $$
 
-Where:
-
-- $c_1 \ \ c_2 \ \ ... \ \ c_n$ are coefficients associated with decision variables $x_1 \ \ x_2 \ \ ... \ \ x_n$
-- $x_1 \ \ x_2 \ \ ... \ \ x_n$ are the decision variables to be determined.
-
 #### Subjected to the following constraints:
 
 **Supply constraints**:
